@@ -29,6 +29,10 @@ library(tictoc)
 
 library(gifski)
 library(purrr)
+
+library(ggfx)
+library(flametree)
+library(ggforce)
 ```
 
 ```{r}
@@ -264,7 +268,7 @@ my_styled_plot <- function(n, palette) {
 
 ```{r}
 mandel <- sample_600_colours(5) # generate some colors to use
-mandelbrot_viz(n = 100,
+my_styled_plot(n = 100,
                palette = mandel) # call the function and specify num iterations and colors to ramp
 ```
 
@@ -301,27 +305,113 @@ art
 
 ```
 ```{r}
-# Add a void theme to remove all the background, grid lines, and axes from the plot
+# sadd a void theme to remove all the background, grid lines, and axes from the plot
 art + 
   theme_void() +  # Apply a theme with no background or axes
   coord_equal()  # Ensure that one unit on the x-axis is the same length as one unit on the y-axis
 
-# Display the modified plot
-art
-
 ```
 
 
 ```{r}
 art + 
-  theme_void() +
+  theme_void() + # Apply a theme with no background or axes
   coord_equal() +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_gradientn(colours = sample_600_colours(25))
+  scale_fill_gradientn(colours = sample_600_colours(25)) # reuse sample 600 function to grab a bunch of colors
 ```
 #### Iteration, Tiles, and Pixels
 ```{r}
+tree <- flametree_grow(
+  seed = 1, 
+  time = 9, 
+  angle = c(-15, 15, 30)
+)
+tree
+tree |> 
+  flametree_plot(
+    background = "#222222", 
+    palette = c("#ffffff", "#f652a0")
+  )
+```
+
+
+```{r}
+leaf <- tree |> filter(id_leaf == TRUE)
+trunk <- geom_bezier(
+  mapping = aes(coord_x, coord_y, group = id_pathtree, size = seg_wid),
+  data = tree, 
+  lineend = "round", 
+  colour = "#555555",
+  show.legend = FALSE
+)
+
+leaves <- geom_point(
+  mapping = aes(coord_x, coord_y),
+  data = leaf, 
+  size = 1.3, 
+  stroke = 0, 
+  colour = "#e38b75"
+)
+
+# function to create a polygon layer with specified x, y coordinates, fill color, and transparency
+polygon_layer <- function(x, y, fill = "white", alpha = .5) {
+  geom_polygon(aes(x, y), fill = fill, alpha = alpha)
+}
+
+# create a black triangle
+triangle <- polygon_layer(
+  x = c(-4, 2, 2), 
+  y = c(0, 0, 6), 
+  fill = "black",
+  alpha = 1
+)
+
+# base ggplot object with void theme and equal coordinates scaling
+base <- ggplot() + 
+  theme_void() +  # no background, axes, or grid lines
+  coord_equal(xlim = c(-3, 1), ylim = c(1, 5)) +  # set limits for x and y axes
+  scale_x_continuous(expand = c(0, 0)) +  # remove padding around x axis
+  scale_y_continuous(expand = c(0, 0)) +  # remove padding around y axis
+  scale_size_identity(guide = guide_none())  # use size as-is, no guide
+
+# plot the base with the tree and blend it with the triangle using xor blend type
+base +
+  as_group(trunk, leaves, id = "tree") +  # group trunk and leaves as tree
+  with_blend(triangle, "tree", blend_type = "xor")  # blend triangle with tree using xor
+
+```
+
+## Put It All Together
+#### Piece I
+```{r}
+
+# Function to generate a pretty pattern using spatial noise
+generate_pretty_pattern <- function(seed, size, frequency, palette) {
+  # Set seed for reproducibility
+  set.seed(seed)
+  
+  # Create a grid of coordinates
+  grid <- long_grid(seq(0, 1, length.out = size), seq(0, 1, length.out = size))
+  
+  # Generate Perlin noise
+  grid <- grid %>% mutate(noise = gen_perlin(x, y, frequency = frequency))
+  
+  # Create a plot with the noise data
+  plot <- ggplot(grid, aes(x = x, y = y, fill = noise)) +
+    geom_raster(interpolate = TRUE) +
+    scale_fill_gradientn(colours = palette) +
+    theme_void() +
+    coord_equal() +
+    theme(legend.position = "none")  # Remove the legend
+  
+  # Display the plot
+  print(plot)
+}
+
+# Example usage
+generate_pretty_pattern(seed = 123, size = 800, frequency = 10, palette = sample_600_colours(26))
 
 ```
 
