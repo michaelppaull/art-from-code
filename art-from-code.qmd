@@ -21,6 +21,14 @@ library(tibble)
 library(scales)
 library(ggthemes)
 library(dplyr)
+
+library(purrr)
+library(tidyr)
+library(ambient)
+library(tictoc)
+
+library(gifski)
+library(purrr)
 ```
 
 ```{r}
@@ -153,6 +161,8 @@ polar_art(seed = 47,
           palette = randy)
 ```
 
+#### Ex IV:
+
 ```{r}
 # copied this function to check it out
 sample_canva <- function(seed = NULL) {
@@ -216,7 +226,12 @@ polar_styled_plot(data = dat, palette = pal) + geom_segment()
 ```
 
 ```{r}
+# I want to generate a mandelbrot visualization
+# Utilizing what we know about the mandelbrot set and its relationship with the complex plane
+# we will try to generate a function to make a decently zoomed out view of the set while
+# messing around with some random colors
 # Define the function to generate Mandelbrot set visualization
+
 my_styled_plot <- function(n, palette) {
   # Create a grid of complex numbers
   x <- seq(-2.5, 1.5, length.out = 800)  # sequence for the real part
@@ -246,10 +261,67 @@ my_styled_plot <- function(n, palette) {
     theme(legend.position = "none")  # Remove the legend
 }
 ```
+
 ```{r}
 mandel <- sample_600_colours(5) # generate some colors to use
-my_styled_plot(n = 100,
+mandelbrot_viz(n = 100,
                palette = mandel) # call the function and specify num iterations and colors to ramp
 ```
 
+## Art of Choice:
+
+### Spatial Noise Tricks
+```{r}
+# Generate 800 numbers between 0 and 1 for the x-coordinates
+x_coords <- seq(from = 0, to = 1, length.out = 800)  
+
+# Generate 800 numbers between 0 and 1 for the y-coordinates
+y_coords <- seq(from = 0, to = 1, length.out = 800)  
+
+# Create a grid with the x and y coordinates
+canvas <- long_grid(x = x_coords, y = y_coords)  
+
+# Apply the perlin noise function to the grid to generate a 'paint' column
+canvas <- canvas |> 
+  mutate(paint = gen_perlin(x, y, frequency = 10, seed = 1234))
+
+# Display the resulting canvas with the "perlin" nose applied
+canvas
+
+```
+```{r}
+# Create a ggplot object with the canvas data, mapping x and y coordinates to the plot
+# and using the 'paint' values for the fill aesthetic
+art <- ggplot(canvas, aes(x, y, fill = paint)) + 
+  # Use the geom_raster function to create a raster plot, which helps for visualizing grids
+  geom_raster(show.legend = FALSE)  # ide the legend for a cleaner look
+
+# Display the plot
+art
+
+```
+```{r}
+# Add a void theme to remove all the background, grid lines, and axes from the plot
+art + 
+  theme_void() +  # Apply a theme with no background or axes
+  coord_equal()  # Ensure that one unit on the x-axis is the same length as one unit on the y-axis
+
+# Display the modified plot
+art
+
+```
+
+
+```{r}
+art + 
+  theme_void() +
+  coord_equal() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradientn(colours = sample_600_colours(25))
+```
+#### Iteration, Tiles, and Pixels
+```{r}
+
+```
 
