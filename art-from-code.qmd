@@ -1,0 +1,14 @@
+---
+title: "Gen Art"
+author: "Michael Aguirre"
+format:
+  html: 
+    toc: true # includes a table of contents in rendered html format
+execute: # for all code chunks
+    warning: false # do not display warnings
+    message: false # do not display messages
+---
+
+GitHub Link: <https://github.com/michaelppaull/art-from-code.git>
+
+## Workshop
