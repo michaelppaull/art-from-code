@@ -23,28 +23,72 @@ library(tibble)
 # inspect mpg data
 mpg
 ```
-
-```{r}
-mpg %>% # call our data and pipe it into ggplot
-  ggplot(aes(displ, cty, colour = class)) + # 
-  geom_point()
-```
-
-```{r}
-mpg %>% 
-  ggplot(aes(displ, cty, colour = class, size = cyl, shape = trans)) + 
-  geom_point(show.legend = FALSE) + 
-  theme_void() + 
-  scale_color_brewer()
-```
-
+## Exercises
+#### Ex I:
 ```{r}
 mpg |>
-  ggplot(aes(displ, hwy, colour = class)) + 
-  geom_jitter(show.legend = FALSE, size = 3, width = 0, height = 1000) + 
-  geom_line(show.legend = FALSE)+
-  geom_jitter(show.legend = FALSE, size = 0.2, colour = "#222222", width = 0) + 
+  ggplot(aes(displ, cty, colour = class)) + 
+  geom_jitter(show.legend = FALSE, size = 3, width = 0, height = 1000) +
+  geom_jitter(show.legend = FALSE, size = 1, colour = "orange", width = 3.14159) + 
   coord_polar() + 
   theme_void() + 
   scale_color_brewer()
 ```
+#### Ex II:
+```{r}
+set.seed(1)
+n <- 50
+dat <- tibble(
+  x0 = runif(n),
+  y0 = runif(n),
+  x1 = x0 + runif(n, min = -.2, max = .2),
+  y1 = y0 + runif(n, min = -.2, max = .2),
+  shade = runif(n), 
+  size = runif(n)
+)
+dat
+```
+```{r}
+polar_art <- function(seed, n, palette) {
+  
+  # set the state of the random number generator
+  set.seed(seed)
+  
+  # data frame containing random values for 
+  # aesthetics we might want to use in the art
+  dat <- tibble(
+    x0 = runif(n),
+    y0 = runif(n),
+    x1 = x0 + runif(n, min = -.2, max = .2),
+    y1 = y0 + runif(n, min = -.2, max = .2),
+    shade = runif(n), 
+    size = runif(n)
+  )
+  
+  # plot segments in various colours, using 
+  # polar coordinates and a gradient palette
+  dat |> 
+    ggplot(aes(
+      x = x0,
+      y = y0,
+      xend = x1,
+      yend = y1,
+      colour = shade,
+      size = size
+    )) +
+    geom_segment(show.legend = FALSE) +
+    coord_polar() +
+    scale_y_continuous(expand = c(0, 0)) +
+    scale_x_continuous(expand = c(0, 0)) + 
+    scale_colour_gradientn(colours = palette) + 
+    scale_size(range = c(0, 10)) + 
+    theme_void()
+}
+```
+```{r}
+polar_art(seed = 2,
+          n = (70),
+          palette = c("#B4EEB4", "#FFFFF0", "#CD69C9")
+)
+```
+
